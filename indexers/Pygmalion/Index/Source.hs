@@ -34,8 +34,8 @@ runSourceAnalyses ci conn = do
   result <- try $ withTranslationUnit ci $ \tu -> do
                     logDiagnostics tu
                     inclusionsAnalysis conn ci tu
-                    addFileDef conn ci
-                    defsAnalysis conn ci tu
+                    --addFileDef conn ci
+                    --defsAnalysis conn ci tu
   case result of
     Right _ -> return ()
     Left (ClangException e) -> void $ logWarn ("Clang exception: " ++ e)
