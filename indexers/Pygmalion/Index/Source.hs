@@ -34,7 +34,7 @@ runSourceAnalyses ci conn = do
   result <- try $ withTranslationUnit ci $ \tu -> do
                     logDiagnostics tu
                     inclusionsAnalysis conn ci tu
-                    addFileDef conn ci
+                    --addFileDef conn ci
                     defsAnalysis conn ci tu
   case result of
     Right _ -> return ()
@@ -106,6 +106,7 @@ defsVisitor conn ci tu cursor _ = do
   -- Ones that are intended to be multiply included, etc?
   if thisFile == slFile loc then do
     cKind <- C.getKind cursor
+    {-
     defC <- C.getDefinition cursor
     defIsNull <- C.isNullCursor defC
     refC <- C.getReferenced cursor
@@ -239,6 +240,7 @@ defsVisitor conn ci tu cursor _ = do
                                    (hash ctxUSR)
         liftIO $ runRPC (rpcFoundDef def) conn
 
+    -}
     -- Recurse (most of the time).
     case cKind of
       C.Cursor_MacroDefinition -> return ChildVisit_Continue
@@ -302,13 +304,17 @@ isDef c k = do
   return $ q1 && (k /= C.Cursor_CXXAccessSpecifier)
 
 fqn :: C.Cursor -> ClangApp s Identifier 
+{-
 fqn cursor = (B.intercalate "::" . reverse) <$> go cursor
   where go c = do isNull <- C.isNullCursor c
                   isTU <- C.getKind c >>= C.isTranslationUnit
                   if isNull || isTU then return [] else go' c
         go' c =  (:) <$> cursorName c <*> (C.getSemanticParent c >>= go)
+-}
+fqn _ = return B.empty
 
 getContext :: TranslationUnit -> C.Cursor -> ClangApp s C.Cursor
+{-
 getContext tu cursor = do
     isNull <- C.isNullCursor cursor
     cKind <- C.getKind cursor
@@ -329,8 +335,11 @@ getContext tu cursor = do
                            C.Cursor_MacroExpansion -> return c  -- Will loop infinitely otherwise.
                            _                       -> getContext tu srcCursor
     go c _ _ = C.getSemanticParent c >>= getContext tu
+-}
+getContext _ c = return c
 
 getContext' :: TranslationUnit -> C.Cursor -> ClangApp s C.Cursor
+{-
 getContext' tu cursor = do
   isNull <- C.isNullCursor cursor
   cKind <- C.getKind cursor
@@ -338,6 +347,8 @@ getContext' tu cursor = do
     (True, _)                         -> return cursor
     (False, C.Cursor_TranslationUnit) -> return cursor
     (False, _)                        -> C.getSemanticParent cursor >>= getContext tu
+-}
+getContext' _ c = return c
 
 cursorName :: C.Cursor -> ClangApp s Identifier
 cursorName c = C.getDisplayName c >>= CS.unpackByteString >>= anonymize
